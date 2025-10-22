@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Any Hair - Agendamento</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,100..700;1,100..700&family=Prata&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              'sans': ['var(--font-family-primary)', 'sans-serif'],
+              'serif': ['Playfair Display', 'serif'],
+            },
+            colors: {
+              'brand-primary': 'var(--color-primary, #DB2777)',
+              'brand-secondary': 'var(--color-secondary, #FCE7F3)',
+              'brand-dark': 'var(--color-dark, #1F2937)',
+              'brand-light': 'var(--color-light, #F8FAFC)',
+              'brand-accent': 'var(--color-accent, #F472B6)',
+              'brand-input-bg': 'var(--color-input-bg, #1F2937)',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      :root {
+        --font-family-primary: 'Poppins', sans-serif;
+        --font-size-base: 16px;
+        --font-weight-base: 400;
+        --font-style-base: normal;
+        --border-radius-global: 8px;
+        --section-padding-y: 64px;
+        --container-max-width: 1280px;
+        --element-spacing: 32px;
+        --font-size-button: 16px;
+        --font-weight-button: 700;
+        --font-size-input-label: 14px;
+        --font-weight-input-label: 500;
+        --font-size-input: 16px;
+        --font-weight-input: 400;
+      }
+      body {
+        font-family: var(--font-family-primary), sans-serif;
+        font-size: var(--font-size-base);
+        font-weight: var(--font-weight-base);
+        font-style: var(--font-style-base);
+      }
+      .container {
+        max-width: var(--container-max-width);
+      }
+      .rounded-layout {
+        border-radius: var(--border-radius-global);
+      }
+      .py-section {
+        padding-top: var(--section-padding-y);
+        padding-bottom: var(--section-padding-y);
+      }
+      .grid-layout-gap {
+        gap: var(--element-spacing);
+      }
+      .input-label-layout {
+        font-size: var(--font-size-input-label);
+        font-weight: var(--font-weight-input-label);
+      }
+      .btn-text-layout {
+        font-size: var(--font-size-button);
+        font-weight: var(--font-weight-button);
+      }
+
+      /* Global dark form element styles */
+      .input-dark, .select-dark, .textarea-dark {
+        width: 100%;
+        padding: 0.75rem 1rem; /* px-4 py-3 */
+        background-color: var(--color-input-bg, #1F2937);
+        color: white; /* Ensure text is visible on dark background */
+        border: 1px solid #374151; /* border-gray-700 */
+        border-radius: var(--border-radius-global, 0.75rem); /* rounded-xl */
+        transition: color, background-color, border-color, box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1);
+        font-size: var(--font-size-input);
+        font-weight: var(--font-weight-input);
+      }
+      .input-dark::placeholder, .textarea-dark::placeholder {
+        color: #9CA3AF; /* placeholder-gray-400 */
+      }
+      .input-dark:focus, .select-dark:focus, .textarea-dark:focus {
+        outline: 2px solid transparent;
+        outline-offset: 2px;
+        --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+        --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+        box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+        --tw-ring-color: var(--color-primary, #DB2777);
+        border-color: var(--color-primary, #DB2777);
+      }
+      /* Special handling for autofill on inputs */
+      .input-dark:-webkit-autofill,
+      .input-dark:-webkit-autofill:hover, 
+      .input-dark:-webkit-autofill:focus, 
+      .input-dark:-webkit-autofill:active {
+          -webkit-box-shadow: 0 0 0 30px var(--color-input-bg, #1F2937) inset !important;
+          -webkit-text-fill-color: white !important; /* Ensure autofilled text is visible */
+      }
+      /* Dark select with custom arrow */
+      .select-dark {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23D1D5DB' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 0.75rem center;
+        background-repeat: no-repeat;
+        background-size: 1.5em 1.5em;
+        padding-right: 3rem;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+      }
+      /* Dark select dropdown options */
+      .select-dark option {
+        background-color: var(--color-input-bg, #1F2937);
+        color: white;
+      }
+      /* Custom success button with hover effect */
+      .btn-success {
+        padding: 8px 16px;
+        background-color: #16a34a; /* green-600 */
+        color: white;
+        border-radius: var(--border-radius-global, 0.75rem); /* rounded-xl */
+        font-size: var(--font-size-button);
+        font-weight: var(--font-weight-button);
+        transition: all 0.2s;
+        border: 1px solid transparent;
+      }
+      .btn-success:hover {
+        background-color: white;
+        color: #16a34a;
+        border-color: #16a34a;
+      }
+      
+      /* Global Button Styles */
+      .btn-primary { padding: 8px 16px; background-color: var(--color-primary, #DB2777); color: white; border-radius: var(--border-radius-global, 8px); transition: all 0.2s; border: 1px solid transparent; font-size: var(--font-size-button); font-weight: var(--font-weight-button); }
+      .btn-primary:hover { background-color: white; color: var(--color-primary, #DB2777); border-color: var(--color-primary, #DB2777); }
+      .btn-secondary { padding: 7px 14px; background-color: #e5e7eb; color: #1F2937; border-radius: var(--border-radius-global, 8px); transition: all 0.2s; border: 1px solid #d1d5db; font-size: var(--font-size-button); font-weight: var(--font-weight-button); }
+      .btn-secondary:hover { background-color: #d1d5db; }
+      .btn-danger { padding: 8px 16px; background-color: #ef4444; color: white; border-radius: var(--border-radius-global, 8px); transition: all 0.2s; border: 1px solid transparent; font-size: var(--font-size-button); font-weight: var(--font-weight-button); }
+      .btn-danger:hover { background-color: #dc2626; }
+
+      .animate-fade-in-fast { animation: fade-in-fast 0.2s ease-out forwards; }
+      @keyframes fade-in-fast {
+        0% { opacity: 0; transform: translateY(-5px); }
+        100% { opacity: 1; transform: translateY(0); }
+      }
+      /* Hide scrollbar for elements with this class */
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.1.1/",
+    "react": "https://aistudiocdn.com/react@^19.1.1",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+    "recharts": "https://aistudiocdn.com/recharts@^2.12.7",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^0.14.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-brand-light font-sans">
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
