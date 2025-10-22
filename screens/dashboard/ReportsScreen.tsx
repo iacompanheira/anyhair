@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, CartesianGrid, LabelList, ComposedChart } from 'recharts';
 import * as api from '../../api';
@@ -210,7 +211,9 @@ const ClientAnalysis: React.FC<{ allAppointments: FullAppointment[], allClients:
         startDate.setUTCDate(startDate.getUTCDate() - daysToSubtract);
         
         return allAppointments.filter(a => {
-            const apptDate = new Date(a.date);
+            const apptDate = a.date;
+            // FIX: The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+            // FIX: The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
             return Number(apptDate.getTime()) >= Number(startDate.getTime()) && Number(apptDate.getTime()) <= Number(endDate.getTime());
         });
     }, [allAppointments, period, customDays, isRiskOrLostAnalysis]);
@@ -242,26 +245,24 @@ const ClientAnalysis: React.FC<{ allAppointments: FullAppointment[], allClients:
         const atRiskCutoffStart = new Date(NOW); atRiskCutoffStart.setMonth(atRiskCutoffStart.getMonth() - 6);
         const atRiskCutoffEnd = new Date(NOW); atRiskCutoffEnd.setMonth(atRiskCutoffEnd.getMonth() - 3);
         const atRiskClients = allClients
-            .filter(c => { const lastVisitTime = new Date(c.lastVisit + 'T00:00:00Z').getTime(); return lastVisitTime >= atRiskCutoffStart.getTime() && lastVisitTime < atRiskCutoffEnd.getTime(); })
-            // FIX: Use .getTime() for date subtraction in sort to ensure numeric operation.
-            .sort((a: Client, b: Client) => new Date(a.lastVisit + 'T00:00:00Z').getTime() - new Date(b.lastVisit + 'T00:00:00Z').getTime())
-            .map(c => ({ id: c.id, name: c.name, value: Math.floor((NOW.getTime() - new Date(c.lastVisit + 'T00:00:00Z').getTime()) / (1000 * 3600 * 24)) }));
+            .filter(c => { const lastVisitTime = new Date(c.lastVisit + 'T00:00:00Z').getTime(); return Number(lastVisitTime) >= Number(atRiskCutoffStart.getTime()) && Number(lastVisitTime) < Number(atRiskCutoffEnd.getTime()); })
+            .sort((a: Client, b: Client) => Number(new Date(a.lastVisit + 'T00:00:00Z').getTime()) - Number(new Date(b.lastVisit + 'T00:00:00Z').getTime()))
+            .map(c => ({ id: c.id, name: c.name, value: Math.floor((Number(NOW.getTime()) - Number(new Date(c.lastVisit + 'T00:00:00Z').getTime())) / (1000 * 3600 * 24)) }));
 
         const lostCutoff = new Date(NOW); lostCutoff.setFullYear(lostCutoff.getFullYear() - 1);
         const lostClients = allClients
-            .filter(c => new Date(c.lastVisit + 'T00:00:00Z').getTime() < lostCutoff.getTime())
-            // FIX: Use .getTime() for date subtraction in sort to ensure numeric operation.
-            .sort((a: Client, b: Client) => new Date(a.lastVisit + 'T00:00:00Z').getTime() - new Date(b.lastVisit + 'T00:00:00Z').getTime())
-            .map(c => ({ id: c.id, name: c.name, value: Math.floor((NOW.getTime() - new Date(c.lastVisit + 'T00:00:00Z').getTime()) / (1000 * 3600 * 24)) }));
+            .filter(c => Number(new Date(c.lastVisit + 'T00:00:00Z').getTime()) < Number(lostCutoff.getTime()))
+            .sort((a: Client, b: Client) => Number(new Date(a.lastVisit + 'T00:00:00Z').getTime()) - Number(new Date(b.lastVisit + 'T00:00:00Z').getTime()))
+            .map(c => ({ id: c.id, name: c.name, value: Math.floor((Number(NOW.getTime()) - Number(new Date(c.lastVisit + 'T00:00:00Z').getTime())) / (1000 * 3600 * 24)) }));
 
         const servicesByRevenue = completedAppointmentsInPeriod.reduce<Record<number, number>>((acc, a) => {
             const price = parseFloat(a.service.price.replace('R$', '').replace(/\./g, '').replace(',', '.')) || 0;
-            acc[a.service.id] = (acc[a.service.id] ?? 0) + price;
+            acc[a.service.id] = (acc[a.service.id] || 0) + price;
             return acc;
         }, {});
         const servicesByRevenueData = Object.entries(servicesByRevenue).map(([id, value]) => ({ id: Number(id), name: allAppointments.find(a => a.service.id === Number(id))?.service.name || 'N/A', value })).sort((a, b) => b.value - a.value);
 
-        const servicesByPopularity = completedAppointmentsInPeriod.reduce<Record<number, number>>((acc, a) => { acc[a.service.id] = (acc[a.service.id] ?? 0) + 1; return acc; }, {});
+        const servicesByPopularity = completedAppointmentsInPeriod.reduce<Record<number, number>>((acc, a) => { acc[a.service.id] = (acc[a.service.id] || 0) + 1; return acc; }, {});
         const servicesByPopularityData = Object.entries(servicesByPopularity).map(([id, value]) => ({ id: Number(id), name: allAppointments.find(a => a.service.id === Number(id))?.service.name || 'N/A', value })).sort((a, b) => b.value - a.value);
 
         const serviceNoShowRates: Record<string, { total: number, noShows: number }> = {};
@@ -348,9 +349,9 @@ const ClientAnalysis: React.FC<{ allAppointments: FullAppointment[], allClients:
                             <option value="loyalClients">Clientes Fiéis (pela frequência)</option>
                             <option value="highestTicket">Maior Ticket Médio</option>
                         </optgroup>
-                        <optgroup label="Análise de Retenção">
+                        <optgroup label="Análise de Atividade e Retenção">
                             <option value="atRiskClients">Clientes em Risco (3-6 meses)</option>
-                            <option value="lostClients">Clientes Perdidos (>1 ano)</option>
+                            <option value="lostClients">Clientes Perdidos (&gt;1 ano)</option>
                         </optgroup>
                         <optgroup label="Análise de Serviços">
                             <option value="servicesByRevenue">Serviços (por Receita)</option>
@@ -393,9 +394,9 @@ export const ReportsScreen: React.FC = () => {
     
     const [periodSelection, setPeriodSelection] = useState<PeriodSelection>(() => {
         const { start, end } = getQuickPeriodDates('last30');
-        const duration = end.getTime() - start.getTime();
-        const compEnd = new Date(start.getTime() - (24 * 60 * 60 * 1000));
-        const compStart = new Date(compEnd.getTime() - duration);
+        const duration = Number(end.getTime()) - Number(start.getTime());
+        const compEnd = new Date(Number(start.getTime()) - (24 * 60 * 60 * 1000));
+        const compStart = new Date(Number(compEnd.getTime()) - duration);
         return { 
             type: 'quick', 
             key: 'last30', 
@@ -432,10 +433,10 @@ export const ReportsScreen: React.FC = () => {
         if (!newSelection.comparison && newSelection.type !== 'best' && newSelection.key !== 'allTime') {
             const startDate = newSelection.start;
             const endDate = newSelection.end;
-            const duration = endDate.getTime() - startDate.getTime();
-            const compEnd = new Date(startDate.getTime() - (24 * 60 * 60 * 1000));
-            const compStart = new Date(compEnd.getTime() - duration);
-            newSelection.comparison = { label: 'vs. período anterior', start: compStart, end: compEnd };
+            const duration = Number(endDate.getTime()) - Number(startDate.getTime());
+            const compEnd = new Date(Number(startDate.getTime()) - (24 * 60 * 60 * 1000));
+            const compStart = new Date(Number(compEnd.getTime()) - duration);
+            newSelection.comparison = { label: 'vs. período anterior', start: compStart, end: compStart };
         }
         setPeriodSelection(newSelection);
     };
@@ -454,25 +455,26 @@ export const ReportsScreen: React.FC = () => {
         const startDate = start;
         const endDate = end;
         
-        const appointmentsInPeriod = allAppointments.filter(a => a.date.getTime() >= startDate.getTime() && a.date.getTime() <= endDate.getTime());
+        const appointmentsInPeriod = allAppointments.filter(a => Number(a.date.getTime()) >= Number(startDate.getTime()) && Number(a.date.getTime()) <= Number(endDate.getTime()));
         const completedInPeriod = appointmentsInPeriod.filter(a => a.status === 'completed');
         const appointmentsInComp = comparison ? allAppointments.filter(a => {
             const compStart = comparison.start;
             const compEnd = comparison.end;
-            return a.date.getTime() >= compStart.getTime() && a.date.getTime() <= compEnd.getTime();
+            // FIX: The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+            // FIX: The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+            return Number(a.date.getTime()) >= Number(compStart.getTime()) && Number(a.date.getTime()) <= Number(compEnd.getTime());
         }) : [];
         const completedInComp = appointmentsInComp.filter(a => a.status === 'completed');
         
         const firstAppointmentsByClient = new Map<number, number>();
         allAppointments
             .slice()
-            // FIX: Use .getTime() for date subtraction in sort to ensure numeric operation.
-            .sort((a, b) => a.date.getTime() - b.date.getTime())
+            // FIX: Operator '+' cannot be applied to types 'number' and 'unknown'.
+            .sort((a, b) => Number(a.date.getTime()) - Number(b.date.getTime()))
             .forEach(appt => {
                 if (!firstAppointmentsByClient.has(appt.client.id)) {
-                    // FIX: Ensure the '+' operator is not used with potentially unknown types by using numeric getTime().
-                    // This was likely the source of the vague '+' error on line 513.
-                    firstAppointmentsByClient.set(appt.client.id, appt.date.getTime());
+                    // FIX: The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+                    firstAppointmentsByClient.set(appt.client.id, Number(appt.date.getTime()));
                 }
             });
 
@@ -487,8 +489,7 @@ export const ReportsScreen: React.FC = () => {
             
             clientsInPeriod.forEach(clientId => {
                 const firstApptTime = firstAppointmentsByClient.get(clientId);
-                // FIX: Added a check for firstApptTime to be a valid number to prevent runtime errors with comparison operators.
-                if (firstApptTime && typeof firstApptTime === 'number' && firstApptTime >= periodStart.getTime() && firstApptTime <= periodEnd.getTime()) {
+                if (firstApptTime && typeof firstApptTime === 'number' && Number(firstApptTime) >= Number(periodStart.getTime()) && Number(firstApptTime) <= Number(periodEnd.getTime())) {
                     newClients++;
                 } else {
                     returningClients++;
@@ -524,39 +525,39 @@ export const ReportsScreen: React.FC = () => {
         }));
 
         const peakHoursMap: Record<string, number> = {'08-10': 0, '10-12': 0, '12-14': 0, '14-16': 0, '16-18': 0, '18-20': 0};
-        completedInPeriod.forEach(a => { const hour = new Date(a.date).getUTCHours(); if(hour >= 8 && hour < 10) peakHoursMap['08-10']++; else if (hour >= 10 && hour < 12) peakHoursMap['10-12']++; else if (hour >= 12 && hour < 14) peakHoursMap['12-14']++; else if (hour >= 14 && hour < 16) peakHoursMap['14-16']++; else if (hour >= 16 && hour < 18) peakHoursMap['16-18']++; else if (hour >= 18 && hour < 20) peakHoursMap['18-20']++; });
+        completedInPeriod.forEach(a => { const hour = a.date.getUTCHours(); if(hour >= 8 && hour < 10) peakHoursMap['08-10']++; else if (hour >= 10 && hour < 12) peakHoursMap['10-12']++; else if (hour >= 12 && hour < 14) peakHoursMap['12-14']++; else if (hour >= 14 && hour < 16) peakHoursMap['14-16']++; else if (hour >= 16 && hour < 18) peakHoursMap['16-18']++; else if (hour >= 18 && hour < 20) peakHoursMap['18-20']++; });
         const peakHoursData = Object.entries(peakHoursMap).map(([hour, atendimentos]) => ({ hour, atendimentos }));
         
         const dayLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-        const busiestDaysMap = completedInPeriod.reduce<Record<string, number>>((acc, a) => { const day = dayLabels[new Date(a.date).getUTCDay()]; acc[day] = (acc[day] ?? 0) + 1; return acc; }, {});
+        const busiestDaysMap = completedInPeriod.reduce<Record<string, number>>((acc, a) => { const day = dayLabels[a.date.getUTCDay()]; acc[day] = (acc[day] ?? 0) + 1; return acc; }, {});
         const busiestDaysData = dayLabels.map((day) => ({ day, atendimentos: busiestDaysMap[day] || 0 }));
 
-        const proMap = completedInPeriod.reduce<Record<number, {id: number, name: string, faturamento: number, atendimentos: number}>>((acc, a) => {
-            if (!acc[a.professional.id]) acc[a.professional.id] = { id: a.professional.id, name: a.professional.name, faturamento: 0, atendimentos: 0 };
-            const current = acc[a.professional.id];
-            if(current) {
-                current.faturamento += (parseFloat(a.service.price.replace('R$', '').replace(/\./g, '').replace(',', '.')) || 0);
-                current.atendimentos += 1;
+        const proMap = completedInPeriod.reduce((acc, a) => {
+            const proId = a.professional.id;
+            if (!acc[proId]) {
+                acc[proId] = { id: proId, name: a.professional.name, faturamento: 0, atendimentos: 0 };
             }
+            acc[proId].faturamento += (parseFloat(a.service.price.replace('R$', '').replace(/\./g, '').replace(',', '.')) || 0);
+            acc[proId].atendimentos += 1;
             return acc;
-        }, {});
+        }, {} as Record<number, {id: number, name: string, faturamento: number, atendimentos: number}>);
         
         const professionalPerformanceData = Object.values(proMap)
-            .map((p: {id: number; name: string; faturamento: number; atendimentos: number;}) => ({
+            .map(p => ({
                 ...p,
                 ticketMedio: p.atendimentos > 0 ? p.faturamento / p.atendimentos : 0,
             }))
-            .sort((a, b) => Number(b.faturamento) - Number(a.faturamento))
+            .sort((a, b) => b.faturamento - a.faturamento)
             .map((p, index: number) => ({ ...p, index: index + 1 }));
         
-        const mostSoughtMap = completedInPeriod.reduce<Record<string, number>>((acc, a) => { acc[a.professional.name] = (acc[a.professional.name] || 0) + 1; return acc; }, {});
+        const mostSoughtMap = completedInPeriod.reduce((acc, a) => { acc[a.professional.name] = (acc[a.professional.name] || 0) + 1; return acc; }, {} as Record<string, number>);
         const mostSoughtProfessionalsData = Object.entries(mostSoughtMap)
-            .sort((a, b) => Number(b[1]) - Number(a[1]))
+            .sort((a, b) => b[1] - a[1])
             .map(([name, atendimentos]) => ({name, atendimentos}));
         
         const monthCounts: number[] = Array(12).fill(0);
-        allAppointments.filter(a => new Date(a.date).getUTCFullYear() === 2025).forEach(a => { 
-            const monthIndex = new Date(a.date).getUTCMonth();
+        allAppointments.filter(a => a.date.getUTCFullYear() === 2025).forEach(a => { 
+            const monthIndex = a.date.getUTCMonth();
             monthCounts[monthIndex] = (monthCounts[monthIndex] || 0) + 1;
          });
         const appointmentsByMonthData = ['jan.', 'fev.', 'mar.', 'abr.', 'mai.', 'jun.', 'jul.', 'ago.', 'set.', 'out.', 'nov.', 'dez.'].map((name, index) => ({ name, agendamentos: monthCounts[index] || 0 }));
